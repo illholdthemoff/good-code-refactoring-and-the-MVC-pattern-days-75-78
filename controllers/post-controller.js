@@ -9,10 +9,6 @@ function getHome(req, res) {
 }
 
 async function getAdmin(req, res) {
-  if (!res.locals.isAuth) {
-    return res.status(401).render("401");
-  }
-
   const posts = await Post.fetchAll();
 
   sessionErrorData = validationSession.getSessionErrorData(req, {
@@ -52,8 +48,15 @@ async function createPost(req, res) {
   res.redirect("/admin");
 }
 
-async function getSinglePost(req, res) {
-  const post = new Post(null, null, req.params.id);
+async function getSinglePost(req, res, next) {
+  let post;
+  try {
+     post = new Post(null, null, req.params.id);
+  } catch (error) {
+    //next(error); // hands it to the default error handling middleweare, since it doesnt work properly by default when workign with promises
+    return res.render("404"); // probably better way to do the above, since we expect it to lead to a page that doesnt exist.
+  }
+  
   await post.fetch();
 
   if (!post.title || !post.content) {
